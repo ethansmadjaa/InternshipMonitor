@@ -3,6 +3,8 @@
 from PyQt5 import QtWidgets, QtCore
 from utils.data_handler import update_application
 from utils.constants import CSV_HEADERS  # Import CSV_HEADERS
+from widgets.drag_drop_widget import DragDropWidget
+
 
 class EditWindow(QtWidgets.QWidget):
     update_signal = QtCore.pyqtSignal()
@@ -10,8 +12,13 @@ class EditWindow(QtWidgets.QWidget):
     def __init__(self, application_data):
         super().__init__()
         self.setWindowTitle('Modifier une candidature')
-        self.setGeometry(300, 300, 500, 500)  # Augmenter la hauteur pour les nouveaux champs
+        self.setGeometry(300, 300, 500, 550)
         self.application_data = application_data
+
+        # Chemins des documents existants
+        documents_str = self.application_data[9]
+        self.document_paths = documents_str.split('|') if documents_str else []
+
         self.initUI()
 
     def initUI(self):
@@ -31,6 +38,15 @@ class EditWindow(QtWidgets.QWidget):
         self.contactEmailInput = QtWidgets.QLineEdit(self.application_data[7])
         self.contactPhoneInput = QtWidgets.QLineEdit(self.application_data[8])
 
+        # Chemins des documents existants
+        self.existing_document_paths = self.application_data[9].split('|') if self.application_data[9] else []
+
+        # Widget de Glisser-Déposer pour les Documents
+        self.dragDropWidget = DragDropWidget()
+        # Initialiser avec les documents existants
+        self.dragDropWidget.document_paths = self.document_paths
+        self.dragDropWidget.updateLabel()
+
         self.saveButton = QtWidgets.QPushButton('Enregistrer les modifications')
         self.saveButton.setFixedHeight(40)
         self.saveButton.clicked.connect(self.saveChanges)
@@ -46,6 +62,7 @@ class EditWindow(QtWidgets.QWidget):
         formLayout.addRow('Nom du contact:', self.contactNameInput)
         formLayout.addRow('Email du contact:', self.contactEmailInput)
         formLayout.addRow('Téléphone du contact:', self.contactPhoneInput)
+        formLayout.addRow('Documents:', self.dragDropWidget)
         formLayout.addRow(self.saveButton)
 
         self.setLayout(formLayout)
@@ -61,6 +78,7 @@ class EditWindow(QtWidgets.QWidget):
         contact_name = self.contactNameInput.text().strip()
         contact_email = self.contactEmailInput.text().strip()
         contact_phone = self.contactPhoneInput.text().strip()
+        documents = '|'.join(self.dragDropWidget.getDocumentPaths())
 
         if company and title and date and status and channel:
             # Créer la liste des données dans l'ordre des en-têtes
@@ -73,7 +91,8 @@ class EditWindow(QtWidgets.QWidget):
                 channel,
                 contact_name,
                 contact_email,
-                contact_phone
+                contact_phone,
+                documents
             ]
             try:
                 updated = update_application(self.application_data, new_data)

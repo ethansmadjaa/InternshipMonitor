@@ -3,6 +3,8 @@
 from PyQt5 import QtWidgets, QtCore
 from utils.data_handler import add_application
 from utils.constants import CSV_HEADERS  # Import CSV_HEADERS
+from widgets.drag_drop_widget import DragDropWidget
+
 
 class AddWindow(QtWidgets.QWidget):
     def __init__(self):
@@ -26,6 +28,7 @@ class AddWindow(QtWidgets.QWidget):
         self.contactNameInput = QtWidgets.QLineEdit()
         self.contactEmailInput = QtWidgets.QLineEdit()
         self.contactPhoneInput = QtWidgets.QLineEdit()
+        self.dragDropWidget = DragDropWidget()
 
         self.addButton = QtWidgets.QPushButton('Ajouter')
         self.addButton.setFixedHeight(40)
@@ -42,6 +45,7 @@ class AddWindow(QtWidgets.QWidget):
         formLayout.addRow('Nom du contact:', self.contactNameInput)
         formLayout.addRow('Email du contact:', self.contactEmailInput)
         formLayout.addRow('Téléphone du contact:', self.contactPhoneInput)
+        formLayout.addRow('Documents:', self.dragDropWidget)
         formLayout.addRow(self.addButton)
 
         self.setLayout(formLayout)
@@ -57,6 +61,7 @@ class AddWindow(QtWidgets.QWidget):
         contact_name = self.contactNameInput.text().strip()
         contact_email = self.contactEmailInput.text().strip()
         contact_phone = self.contactPhoneInput.text().strip()
+        documents = '|'.join(self.dragDropWidget.getDocumentPaths())
 
         if company and title and date and status and channel:
             # Créer la liste des données dans l'ordre des en-têtes
@@ -69,7 +74,8 @@ class AddWindow(QtWidgets.QWidget):
                 channel,
                 contact_name,
                 contact_email,
-                contact_phone
+                contact_phone,
+                documents
             ]
             try:
                 add_application(application_data)
