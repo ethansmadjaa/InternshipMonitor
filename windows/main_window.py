@@ -4,7 +4,9 @@ import sys
 from PyQt5 import QtWidgets, QtCore, QtGui
 from windows.add_window import AddWindow
 from windows.view_window import ViewWindow
+from windows.statistics_window import StatisticsWindow  # Importer la nouvelle fenêtre de statistiques
 from utils.constants import CSV_FILE
+
 
 class InternshipMonitor(QtWidgets.QMainWindow):
     def __init__(self):
@@ -29,15 +31,18 @@ class InternshipMonitor(QtWidgets.QMainWindow):
         # Création des boutons
         self.addButton = QtWidgets.QPushButton('Ajouter une candidature')
         self.viewButton = QtWidgets.QPushButton('Afficher les candidatures')
+        self.statsButton = QtWidgets.QPushButton('Voir les statistiques')  # Nouveau bouton
 
         # Configuration de la taille des boutons
         self.addButton.setFixedHeight(40)
         self.viewButton.setFixedHeight(40)
+        self.statsButton.setFixedHeight(40)
 
         # Disposition des boutons
         button_layout = QtWidgets.QVBoxLayout()
         button_layout.addWidget(self.addButton)
         button_layout.addWidget(self.viewButton)
+        button_layout.addWidget(self.statsButton)  # Ajouter le bouton aux layouts
         button_layout.setSpacing(20)  # Espace entre les boutons
 
         # Ajout des boutons dans un widget
@@ -60,6 +65,7 @@ class InternshipMonitor(QtWidgets.QMainWindow):
         # Connexion des signaux aux slots
         self.addButton.clicked.connect(self.showAddWindow)
         self.viewButton.clicked.connect(self.showViewWindow)
+        self.statsButton.clicked.connect(self.showStatisticsWindow)  # Connecter le nouveau bouton
 
     def showAddWindow(self):
         self.addWindow = AddWindow()
@@ -68,3 +74,7 @@ class InternshipMonitor(QtWidgets.QMainWindow):
     def showViewWindow(self):
         self.viewWindow = ViewWindow()
         self.viewWindow.show()
+
+    def showStatisticsWindow(self):
+        self.statsWindow = StatisticsWindow()
+        self.statsWindow.show()
