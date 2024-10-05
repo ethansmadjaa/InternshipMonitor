@@ -1,15 +1,15 @@
-from PyQt5 import QtWidgets, QtCore
-import csv
-from windows.edit_window import EditWindow
-from utils.constants import CSV_FILE, CSV_SEPARATOR, CSV_ENCODING
-from utils.data_handler import read_applications
+# windows/view_window.py
 
+from PyQt5 import QtWidgets, QtCore
+from windows.edit_window import EditWindow
+from utils.constants import CSV_HEADERS
+from utils.data_handler import read_applications
 
 class ViewWindow(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Afficher les candidatures')
-        self.setGeometry(200, 200, 900, 600)
+        self.setGeometry(200, 200, 1000, 600)  # Augmenter la largeur pour les nouvelles colonnes
         self.initUI()
 
     def initUI(self):
@@ -21,9 +21,8 @@ class ViewWindow(QtWidgets.QWidget):
 
         # Création du tableau
         self.table = QtWidgets.QTableWidget()
-        self.table.setColumnCount(7)  # Ajout d'une colonne pour le bouton "Modifier"
-        self.table.setHorizontalHeaderLabels(
-            ['Entreprise', 'Intitulé', 'Date', 'Statut', 'Détails', 'Canal', 'Modifier'])
+        self.table.setColumnCount(len(CSV_HEADERS) + 1)  # Nombre de colonnes + bouton "Modifier"
+        self.table.setHorizontalHeaderLabels(CSV_HEADERS + ['Modifier'])
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         self.table.setWordWrap(True)
@@ -59,7 +58,7 @@ class ViewWindow(QtWidgets.QWidget):
                     # Ajouter le bouton "Modifier"
                     edit_button = QtWidgets.QPushButton('Modifier')
                     edit_button.clicked.connect(self.getEditFunction(row_data))
-                    self.table.setCellWidget(row, 6, edit_button)
+                    self.table.setCellWidget(row, len(CSV_HEADERS), edit_button)
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, 'Erreur', f'Erreur lors du chargement des candidatures : {e}')
 
@@ -68,5 +67,4 @@ class ViewWindow(QtWidgets.QWidget):
             self.editWindow = EditWindow(row_data)
             self.editWindow.update_signal.connect(self.loadData)
             self.editWindow.show()
-
         return editApplication
