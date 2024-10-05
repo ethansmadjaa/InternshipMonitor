@@ -1,10 +1,8 @@
 # windows/edit_window.py
 
 from PyQt5 import QtWidgets, QtCore
-import csv
-from utils.constants import CSV_FILE, CSV_SEPARATOR, CSV_ENCODING
 from utils.data_handler import update_application
-
+from utils.constants import CSV_HEADERS  # Import CSV_HEADERS
 
 class EditWindow(QtWidgets.QWidget):
     update_signal = QtCore.pyqtSignal()
@@ -12,7 +10,7 @@ class EditWindow(QtWidgets.QWidget):
     def __init__(self, application_data):
         super().__init__()
         self.setWindowTitle('Modifier une candidature')
-        self.setGeometry(300, 300, 500, 400)
+        self.setGeometry(300, 300, 500, 500)  # Augmenter la hauteur pour les nouveaux champs
         self.application_data = application_data
         self.initUI()
 
@@ -28,6 +26,11 @@ class EditWindow(QtWidgets.QWidget):
         self.detailsInput = QtWidgets.QTextEdit(self.application_data[4])
         self.channelInput = QtWidgets.QLineEdit(self.application_data[5])
 
+        # Champs pour les informations de contact
+        self.contactNameInput = QtWidgets.QLineEdit(self.application_data[6])
+        self.contactEmailInput = QtWidgets.QLineEdit(self.application_data[7])
+        self.contactPhoneInput = QtWidgets.QLineEdit(self.application_data[8])
+
         self.saveButton = QtWidgets.QPushButton('Enregistrer les modifications')
         self.saveButton.setFixedHeight(40)
         self.saveButton.clicked.connect(self.saveChanges)
@@ -40,6 +43,9 @@ class EditWindow(QtWidgets.QWidget):
         formLayout.addRow('Statut de la candidature:', self.statusInput)
         formLayout.addRow('Détails supplémentaires:', self.detailsInput)
         formLayout.addRow('Canal de candidature:', self.channelInput)
+        formLayout.addRow('Nom du contact:', self.contactNameInput)
+        formLayout.addRow('Email du contact:', self.contactEmailInput)
+        formLayout.addRow('Téléphone du contact:', self.contactPhoneInput)
         formLayout.addRow(self.saveButton)
 
         self.setLayout(formLayout)
@@ -52,12 +58,25 @@ class EditWindow(QtWidgets.QWidget):
         status = self.statusInput.currentText()
         details = self.detailsInput.toPlainText().strip()
         channel = self.channelInput.text().strip()
+        contact_name = self.contactNameInput.text().strip()
+        contact_email = self.contactEmailInput.text().strip()
+        contact_phone = self.contactPhoneInput.text().strip()
 
         if company and title and date and status and channel:
-            # Modified code in saveChanges method
-
+            # Créer la liste des données dans l'ordre des en-têtes
+            new_data = [
+                company,
+                title,
+                date,
+                status,
+                details,
+                channel,
+                contact_name,
+                contact_email,
+                contact_phone
+            ]
             try:
-                updated = update_application(self.application_data, [company, title, date, status, details, channel])
+                updated = update_application(self.application_data, new_data)
                 if updated:
                     QtWidgets.QMessageBox.information(self, 'Succès', 'Candidature mise à jour avec succès.')
                     self.update_signal.emit()
