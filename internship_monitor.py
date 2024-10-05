@@ -1,6 +1,6 @@
 import sys
 import csv
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 
 CSV_FILE = 'candidatures.csv'
 CSV_SEPARATOR = ';'
@@ -11,49 +11,63 @@ class InternshipMonitor(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('InternshipMonitor')
-        self.setGeometry(100, 100, 400, 200)
+        self.setGeometry(100, 100, 600, 400)
         self.initUI()
 
     def initUI(self):
+        # Création du label pour le logo
+        logo_label = QtWidgets.QLabel()
+        logo_pixmap = QtGui.QPixmap('./img/logo.png')
+        logo_pixmap = logo_pixmap.scaled(100, 100, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+        logo_label.setPixmap(logo_pixmap)
+        logo_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        # Création du label pour le titre
+        title_label = QtWidgets.QLabel('InternshipMonitor')
+        title_label.setAlignment(QtCore.Qt.AlignCenter)
+        title_label.setFont(QtGui.QFont('Arial', 24, QtGui.QFont.Bold))
+
         # Création des boutons
         self.addButton = QtWidgets.QPushButton('Ajouter une candidature')
         self.viewButton = QtWidgets.QPushButton('Afficher les candidatures')
-        self.updateButton = QtWidgets.QPushButton('Mettre à jour une candidature')
+
+        # Configuration de la taille des boutons
+        self.addButton.setFixedHeight(40)
+        self.viewButton.setFixedHeight(40)
 
         # Disposition des boutons
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.addButton)
-        layout.addWidget(self.viewButton)
-        layout.addWidget(self.updateButton)
+        button_layout = QtWidgets.QVBoxLayout()
+        button_layout.addWidget(self.addButton)
+        button_layout.addWidget(self.viewButton)
+        button_layout.setSpacing(20)  # Espace entre les boutons
+
+        # Ajout des boutons dans un widget
+        button_widget = QtWidgets.QWidget()
+        button_widget.setLayout(button_layout)
+
+        # Disposition principale
+        main_layout = QtWidgets.QVBoxLayout()
+        main_layout.addWidget(logo_label)
+        main_layout.addWidget(title_label)
+        main_layout.addStretch()  # Espace flexible
+        main_layout.addWidget(button_widget)
+        main_layout.addStretch()  # Espace flexible
 
         # Configuration du widget central
         centralWidget = QtWidgets.QWidget()
-        centralWidget.setLayout(layout)
+        centralWidget.setLayout(main_layout)
         self.setCentralWidget(centralWidget)
 
         # Connexion des signaux aux slots
         self.addButton.clicked.connect(self.showAddWindow)
         self.viewButton.clicked.connect(self.showViewWindow)
-        self.updateButton.clicked.connect(self.showUpdateWindow)
-
-    def showAddWindow(self):
-        self.addWindow = AddWindow()
-        self.addWindow.show()
-
-    def showViewWindow(self):
-        self.viewWindow = ViewWindow()
-        self.viewWindow.show()
-
-    def showUpdateWindow(self):
-        self.updateWindow = UpdateWindow()
-        self.updateWindow.show()
 
 
 class AddWindow(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Ajouter une candidature')
-        self.setGeometry(150, 150, 400, 300)
+        self.setGeometry(150, 150, 500, 400)
         self.initUI()
 
     def initUI(self):
@@ -68,6 +82,7 @@ class AddWindow(QtWidgets.QWidget):
         self.channelInput = QtWidgets.QLineEdit()
 
         self.addButton = QtWidgets.QPushButton('Ajouter')
+        self.addButton.setFixedHeight(40)
         self.addButton.clicked.connect(self.addApplication)
 
         # Disposition des widgets
@@ -84,20 +99,23 @@ class AddWindow(QtWidgets.QWidget):
 
     def addApplication(self):
         # Récupération des données
-        company = self.companyInput.text()
-        title = self.titleInput.text()
+        company = self.companyInput.text().strip()
+        title = self.titleInput.text().strip()
         date = self.dateInput.text()
         status = self.statusInput.currentText()
-        details = self.detailsInput.toPlainText()
-        channel = self.channelInput.text()
+        details = self.detailsInput.toPlainText().strip()
+        channel = self.channelInput.text().strip()
 
         if company and title and date and status and channel:
             # Écriture dans le fichier CSV
-            with open(CSV_FILE, 'a', newline='', encoding=CSV_ENCODING) as file:
-                writer = csv.writer(file, delimiter=CSV_SEPARATOR)
-                writer.writerow([company, title, date, status, details, channel])
-            QtWidgets.QMessageBox.information(self, 'Succès', 'Candidature ajoutée avec succès.')
-            self.close()
+            try:
+                with open(CSV_FILE, 'a', newline='', encoding=CSV_ENCODING) as file:
+                    writer = csv.writer(file, delimiter=CSV_SEPARATOR)
+                    writer.writerow([company, title, date, status, details, channel])
+                QtWidgets.QMessageBox.information(self, 'Succès', 'Candidature ajoutée avec succès.')
+                self.close()
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(self, 'Erreur', f'Erreur lors de l\'ajout de la candidature : {e}')
         else:
             QtWidgets.QMessageBox.warning(self, 'Erreur', 'Veuillez remplir tous les champs obligatoires.')
 
@@ -106,21 +124,32 @@ class ViewWindow(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Afficher les candidatures')
-        self.setGeometry(200, 200, 800, 400)
+        self.setGeometry(200, 200, 900, 600)
         self.initUI()
 
     def initUI(self):
+        # Création du filtre par statut
         self.statusFilter = QtWidgets.QComboBox()
         self.statusFilter.addItem('Tous les statuts')
         self.statusFilter.addItems(['Candidature envoyée', 'Candidature refusée', 'Candidature acceptée'])
         self.statusFilter.currentIndexChanged.connect(self.loadData)
 
+        # Création du tableau
         self.table = QtWidgets.QTableWidget()
         self.table.setColumnCount(7)  # Ajout d'une colonne pour le bouton "Modifier"
         self.table.setHorizontalHeaderLabels(
             ['Entreprise', 'Intitulé', 'Date', 'Statut', 'Détails', 'Canal', 'Modifier'])
         self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        self.table.setWordWrap(True)
+        self.table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)  # Empêche l'édition directe
+        self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
 
+        # Ajustement de la hauteur des lignes automatiquement
+        self.table.verticalHeader().setDefaultSectionSize(50)
+        self.table.horizontalHeader().setMinimumSectionSize(100)
+
+        # Disposition des widgets
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.statusFilter)
         layout.addWidget(self.table)
@@ -140,92 +169,34 @@ class ViewWindow(QtWidgets.QWidget):
                         row = self.table.rowCount()
                         self.table.insertRow(row)
                         for column, data in enumerate(row_data):
-                            self.table.setItem(row, column, QtWidgets.QTableWidgetItem(data))
+                            item = QtWidgets.QTableWidgetItem(data)
+                            item.setTextAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+                            self.table.setItem(row, column, item)
                         # Ajouter le bouton "Modifier"
                         edit_button = QtWidgets.QPushButton('Modifier')
                         edit_button.clicked.connect(self.getEditFunction(row_data))
                         self.table.setCellWidget(row, 6, edit_button)
         except FileNotFoundError:
             QtWidgets.QMessageBox.warning(self, 'Erreur', 'Aucune candidature trouvée.')
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, 'Erreur', f'Erreur lors de la lecture du fichier CSV : {e}')
 
     def getEditFunction(self, row_data):
         def editApplication():
             self.editWindow = EditWindow(row_data)
+            self.editWindow.update_signal.connect(self.loadData)
             self.editWindow.show()
 
         return editApplication
 
 
-class UpdateWindow(QtWidgets.QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle('Mettre à jour une candidature')
-        self.setGeometry(250, 250, 400, 200)
-        self.initUI()
-
-    def initUI(self):
-        self.companyInput = QtWidgets.QLineEdit()
-        self.searchButton = QtWidgets.QPushButton('Rechercher')
-        self.searchButton.clicked.connect(self.searchApplication)
-
-        self.statusInput = QtWidgets.QComboBox()
-        self.statusInput.addItems(['Candidature envoyée', 'Candidature refusée', 'Candidature acceptée'])
-        self.updateButton = QtWidgets.QPushButton('Mettre à jour')
-        self.updateButton.clicked.connect(self.updateApplication)
-        self.updateButton.setEnabled(False)
-
-        formLayout = QtWidgets.QFormLayout()
-        formLayout.addRow('Nom de l\'entreprise:', self.companyInput)
-        formLayout.addRow(self.searchButton)
-        formLayout.addRow('Nouveau statut:', self.statusInput)
-        formLayout.addRow(self.updateButton)
-
-        self.setLayout(formLayout)
-
-    def searchApplication(self):
-        self.companyName = self.companyInput.text()
-        self.applications = []
-        self.found = False
-
-        try:
-            with open(CSV_FILE, 'r', encoding=CSV_ENCODING) as file:
-                reader = csv.reader(file, delimiter=CSV_SEPARATOR)
-                for row in reader:
-                    self.applications.append(row)
-                    if row[0].lower() == self.companyName.lower():
-                        self.found = True
-            if self.found:
-                QtWidgets.QMessageBox.information(self, 'Succès', 'Candidature trouvée.')
-                self.updateButton.setEnabled(True)
-            else:
-                QtWidgets.QMessageBox.warning(self, 'Erreur', 'Candidature non trouvée.')
-        except FileNotFoundError:
-            QtWidgets.QMessageBox.warning(self, 'Erreur', 'Aucune candidature trouvée.')
-
-    def updateApplication(self):
-        newStatus = self.statusInput.currentText()
-        updated = False
-
-        for i, row in enumerate(self.applications):
-            if row[0].lower() == self.companyName.lower():
-                self.applications[i][3] = newStatus
-                updated = True
-
-        if updated:
-            with open(CSV_FILE, 'w', newline='', encoding=CSV_ENCODING) as file:
-                writer = csv.writer(file, delimiter=CSV_SEPARATOR)
-                writer.writerows(self.applications)
-            QtWidgets.QMessageBox.information(self, 'Succès', 'Statut mis à jour avec succès.')
-            self.close()
-        else:
-            QtWidgets.QMessageBox.warning(self, 'Erreur', 'Erreur lors de la mise à jour.')
-
-
 class EditWindow(QtWidgets.QWidget):
+    update_signal = QtCore.pyqtSignal()
+
     def __init__(self, application_data):
         super().__init__()
         self.setWindowTitle('Modifier une candidature')
-        self.setGeometry(300, 300, 400, 300)
+        self.setGeometry(300, 300, 500, 400)
         self.application_data = application_data
         self.initUI()
 
@@ -242,6 +213,7 @@ class EditWindow(QtWidgets.QWidget):
         self.channelInput = QtWidgets.QLineEdit(self.application_data[5])
 
         self.saveButton = QtWidgets.QPushButton('Enregistrer les modifications')
+        self.saveButton.setFixedHeight(40)
         self.saveButton.clicked.connect(self.saveChanges)
 
         # Disposition des widgets
@@ -258,40 +230,42 @@ class EditWindow(QtWidgets.QWidget):
 
     def saveChanges(self):
         # Récupération des données modifiées
-        company = self.companyInput.text()
-        title = self.titleInput.text()
+        company = self.companyInput.text().strip()
+        title = self.titleInput.text().strip()
         date = self.dateInput.text()
         status = self.statusInput.currentText()
-        details = self.detailsInput.toPlainText()
-        channel = self.channelInput.text()
+        details = self.detailsInput.toPlainText().strip()
+        channel = self.channelInput.text().strip()
 
-        # Chargement de toutes les candidatures
-        applications = []
-        try:
-            with open(CSV_FILE, 'r', encoding=CSV_ENCODING) as file:
-                reader = csv.reader(file, delimiter=CSV_SEPARATOR)
-                applications = list(reader)
-        except FileNotFoundError:
-            QtWidgets.QMessageBox.warning(self, 'Erreur', 'Aucune candidature trouvée.')
-            return
+        if company and title and date and status and channel:
+            try:
+                # Chargement de toutes les candidatures
+                with open(CSV_FILE, 'r', encoding=CSV_ENCODING) as file:
+                    reader = csv.reader(file, delimiter=CSV_SEPARATOR)
+                    applications = list(reader)
 
-        # Mise à jour de la candidature spécifique
-        updated = False
-        for i, row in enumerate(applications):
-            if row == self.application_data:
-                applications[i] = [company, title, date, status, details, channel]
-                updated = True
-                break
+                # Mise à jour de la candidature spécifique
+                updated = False
+                for i, row in enumerate(applications):
+                    if row == self.application_data:
+                        applications[i] = [company, title, date, status, details, channel]
+                        updated = True
+                        break
 
-        if updated:
-            # Écriture des candidatures mises à jour dans le fichier CSV
-            with open(CSV_FILE, 'w', newline='', encoding=CSV_ENCODING) as file:
-                writer = csv.writer(file, delimiter=CSV_SEPARATOR)
-                writer.writerows(applications)
-            QtWidgets.QMessageBox.information(self, 'Succès', 'Candidature mise à jour avec succès.')
-            self.close()
+                if updated:
+                    # Écriture des candidatures mises à jour dans le fichier CSV
+                    with open(CSV_FILE, 'w', newline='', encoding=CSV_ENCODING) as file:
+                        writer = csv.writer(file, delimiter=CSV_SEPARATOR)
+                        writer.writerows(applications)
+                    QtWidgets.QMessageBox.information(self, 'Succès', 'Candidature mise à jour avec succès.')
+                    self.update_signal.emit()
+                    self.close()
+                else:
+                    QtWidgets.QMessageBox.warning(self, 'Erreur', 'Erreur lors de la mise à jour.')
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(self, 'Erreur', f'Erreur lors de la mise à jour : {e}')
         else:
-            QtWidgets.QMessageBox.warning(self, 'Erreur', 'Erreur lors de la mise à jour.')
+            QtWidgets.QMessageBox.warning(self, 'Erreur', 'Veuillez remplir tous les champs obligatoires.')
 
 
 def main():
