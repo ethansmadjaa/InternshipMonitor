@@ -117,7 +117,8 @@ class ViewWindow(QtWidgets.QWidget):
 
         self.table = QtWidgets.QTableWidget()
         self.table.setColumnCount(7)  # Ajout d'une colonne pour le bouton "Modifier"
-        self.table.setHorizontalHeaderLabels(['Entreprise', 'Intitulé', 'Date', 'Statut', 'Détails', 'Canal', 'Modifier'])
+        self.table.setHorizontalHeaderLabels(
+            ['Entreprise', 'Intitulé', 'Date', 'Statut', 'Détails', 'Canal', 'Modifier'])
         self.table.horizontalHeader().setStretchLastSection(True)
 
         layout = QtWidgets.QVBoxLayout()
@@ -151,6 +152,7 @@ class ViewWindow(QtWidgets.QWidget):
         def editApplication():
             self.editWindow = EditWindow(row_data)
             self.editWindow.show()
+
         return editApplication
 
 
@@ -217,6 +219,8 @@ class UpdateWindow(QtWidgets.QWidget):
             self.close()
         else:
             QtWidgets.QMessageBox.warning(self, 'Erreur', 'Erreur lors de la mise à jour.')
+
+
 class EditWindow(QtWidgets.QWidget):
     def __init__(self, application_data):
         super().__init__()
